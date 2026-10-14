@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UPI Scam Shield</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><div class="brand">🛡️ UPI Scam Shield</div>
+<div><a class="on" href="index.html">Payment check</a><a href="alerts.html" target="_blank">Live alerts</a><a href="dashboard.html" target="_blank">Dashboard</a><a href="sms.html" target="_blank">SMS check</a></div></nav>
+<main>
+<section>
+  <h1>Pay karne se pehle, ID check karo.</h1>
+  <p class="sub">UPI ID daalo. Hum 4 layer me check karke batayenge ki payment safe hai ya scam.</p>
+  <div class="panel tilt">
+    <label for="upi">Receiver ki UPI ID</label>
+    <input id="upi" placeholder="example@oksbi" autocomplete="off">
+    <div class="row">
+      <div><label for="amt">Amount (₹)</label><input id="amt" type="number" min="0" placeholder="5000"></div>
+      <div><label for="msg">Mila hua message (optional)</label><input id="msg" placeholder="Abhi pay karo warna..."></div>
+    </div>
+    <div class="chips">
+      <button class="chip" data-u="sbi-kyc-update@okaxis" data-a="5000" data-m="Abhi pay karo warna account block">Fake KYC ID</button>
+      <button class="chip" data-u="refund.help123@ybl" data-a="2000" data-m="">Refund scam ID</button>
+      <button class="chip" data-u="upi://collect?pa=refund.help123@ybl&amp;am=4999&amp;tn=Cashback%20receive%20karo">UPI link (collect)</button>
+      <button class="chip" data-u="rohan@oksbi" data-a="200" data-m="">Normal ID</button>
+    </div>
+    <label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="voice" checked style="width:auto"> Voice warning (Hindi)</label>
+    <button class="btn" id="go">Check karo</button>
+    <button class="btn report" id="rep" disabled>Is ID ko scam report karo</button>
+  </div>
+</section>
+<section>
+  <div class="stage"><div class="sway"><div class="shield" id="shield"></div></div></div>
+  <div class="verdict"><h2 id="lvl">Check ka intezaar</h2><p id="adv">UPI ID daalkar Check karo dabayein.</p></div>
+  <ul class="why" id="why"></ul>
+  <div class="panel" id="ai" style="margin-top:16px;display:none">
+    <div class="row"><div><small>Rule score</small><div class="num2" id="rs">-</div></div><div><small>AI (ML) score</small><div class="num2" id="ms">-</div></div></div>
+    <p id="hi" style="margin-top:12px;font-size:1.05rem"></p>
+    <ul class="why" id="fac"></ul>
+    <small style="color:var(--mut);display:block;margin-top:10px">AI model synthetic (dummy) data par trained hai.</small>
+  </div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const COL={GREEN:"var(--g)",YELLOW:"var(--y)",RED:"var(--r)"};
+const NAME={GREEN:"Safe hai",YELLOW:"Savdhaan",RED:"Khatra!"};
+const sh=$("shield");
+// 3D shield: 8 stacked layers = thickness
+for(let i=7;i>=0;i--){const d=document.createElement("div");d.className="layer"+(i==0?" front":"");
+ d.style.transform=`translateZ(${-i*6}px)`;d.style.filter=i?`brightness(${1-i*.07})`:"";sh.appendChild(d);}
+const front=sh.querySelector(".front");front.innerHTML="<b>?</b><span>Score</span>";
+// mouse tilt for shield + panels
+document.addEventListener("mousemove",e=>{
+ const x=e.clientX/innerWidth-.5,y=e.clientY/innerHeight-.5;
+ sh.style.transform=`rotateX(${-y*30}deg) rotateY(${x*40}deg)`;
+ document.querySelectorAll(".tilt").forEach(p=>{p.style.transform=`perspective(900px) rotateX(${-y*5}deg) rotateY(${x*6}deg)`});
+});
+let isCollect=false;
+function parseLink(){const v=$("upi").value.trim();
+ if(!/^upi:\/\//i.test(v))return;
+ try{const u=new URL(v),p=u.searchParams;isCollect=u.hostname.toLowerCase()==="collect";
+  $("upi").value=p.get("pa")||"";if(p.get("am"))$("amt").value=p.get("am");if(p.get("tn"))$("msg").value=p.get("tn");
+ }catch(e){$("adv").textContent="UPI link samajh nahi aaya.";}}
+$("upi").addEventListener("input",parseLink);
+document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{isCollect=false;$("upi").value=c.dataset.u;$("amt").value=c.dataset.a||"";$("msg").value=c.dataset.m||"";parseLink();});
+function speak(r){const level=r.level;if(!$("voice").checked||!("speechSynthesis" in window))return;
+ const t={RED:"सावधान! यह यूपीआई आईडी स्कैम हो सकती है। पेमेंट मत कीजिए।",YELLOW:"थोड़ा रुकिए। पहले रिसीवर से कन्फर्म कर लीजिए।",GREEN:"कोई बड़ा खतरा नहीं मिला।"}[level];const txt=r.explanation_hi||t;
+ speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang="hi-IN";speechSynthesis.speak(u);}
+function showAI(r){$("ai").style.display="block";$("rs").textContent=r.rule_score;$("ms").textContent=r.ml_score;$("hi").textContent=r.explanation_hi;
+ const f=$("fac");f.innerHTML="";r.ml_factors.forEach(x=>{const li=document.createElement("li");li.textContent="AI signal: "+x.name;f.appendChild(li);});}
+function reporter(){if(new URLSearchParams(location.search).has("demo"))return "demo-"+Math.random().toString(36).slice(2);
+ let d=null;try{d=localStorage.getItem("dev");if(!d){d="dev-"+Math.random().toString(36).slice(2);localStorage.setItem("dev",d);}}catch(e){d="dev-fallback";}return d;}
+async function post(url,body){const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+ if(!r.ok)throw new Error("Server error");return r.json();}
+$("go").onclick=async()=>{
+ const upi=$("upi").value.trim();
+ if(!upi){$("adv").textContent="Pehle UPI ID daalein.";return;}
+ try{
+  const r=await post("/check",{upi_id:upi,amount:+$("amt").value||0,message:$("msg").value,is_collect:isCollect});
+  document.documentElement.style.setProperty("--c",COL[r.level]);
+  front.innerHTML=`<b>${r.score}</b><span>${NAME[r.level]}</span>`;
+  $("lvl").textContent=NAME[r.level];$("adv").textContent=r.advice;
+  const ul=$("why");ul.innerHTML="";
+  (r.reasons.length?r.reasons:["Koi suspicious signal nahi mila"]).forEach(t=>{const li=document.createElement("li");li.textContent=t;ul.appendChild(li);});
+  $("rep").disabled=false;showAI(r);speak(r);
+ }catch(e){$("adv").textContent="Backend se connect nahi ho paya. Server chal raha hai?";}
+};
+$("rep").onclick=async()=>{
+ try{const r=await post("/report",{upi_id:$("upi").value.trim(),reason:$("msg").value,reporter:reporter()});
+  $("rep").textContent=r.status==="duplicate"?"Aap ye ID pehle hi report kar chuke hain":`Report ho gayi (${r.total_reports} alag logon ne)`;
+  setTimeout(()=>{$("rep").textContent="Is ID ko scam report karo"},2800);
+ }catch(e){$("adv").textContent="Report nahi ho payi, dobara try karein.";}
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Live Scam Alerts</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><div class="brand">🛡️ UPI Scam Shield</div>
+<div><a href="index.html">Payment check</a><a href="dashboard.html">Dashboard</a><a href="sms.html">SMS check</a><a class="on" href="alerts.html">Live alerts</a></div></nav>
+<main><section class="wide">
+  <h1><span class="pulse"></span>Live community alerts</h1>
+  <p class="sub">Koi bhi user kisi ID ko scam report kare, to yahan 3 second ke andar dikhega.</p>
+  <div class="feed" id="feed"></div>
+</section></main>
+<script>
+const feed=document.getElementById("feed");let seen=new Set(),first=true;
+async function poll(){
+ try{
+  const list=await (await fetch("/alerts")).json();
+  feed.innerHTML="";
+  list.forEach(a=>{
+   const d=document.createElement("div");d.className="item"+(!first&&!seen.has(a.id)?" new":"");
+   const l=document.createElement("div"),c=document.createElement("code"),s=document.createElement("small");
+   c.textContent=a.upi_id;s.textContent=a.reason||"Scam report";l.append(c,s);
+   const t=document.createElement("small");t.textContent=a.created_at.replace("T"," ");
+   d.append(l,t);feed.appendChild(d);
+  });
+  list.forEach(a=>seen.add(a.id));first=false;
+ }catch(e){feed.textContent="Backend se connect nahi ho paya.";}
+}
+poll();setInterval(poll,2500);
+document.addEventListener("mousemove",e=>{const x=e.clientX/innerWidth-.5,y=e.clientY/innerHeight-.5;
+ document.querySelectorAll(".item").forEach(i=>i.style.transform=`perspective(800px) rotateX(${-y*4}deg) rotateY(${x*5}deg)`);});
+</script>
+</body>
+</html>

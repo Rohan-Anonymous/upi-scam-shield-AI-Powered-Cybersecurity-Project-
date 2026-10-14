@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Impact Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><div class="brand">🛡️ UPI Scam Shield</div>
+<div><a href="index.html">Payment check</a><a href="alerts.html">Live alerts</a><a class="on" href="dashboard.html">Dashboard</a><a href="sms.html">SMS check</a></div></nav>
+<main><section class="wide">
+  <h1><span class="pulse"></span>Impact dashboard</h1>
+  <p class="sub">Is prototype ne ab tak kitni payments check kiye aur kitne khatre rok diye. Demo data hai, real UPI data nahi.</p>
+  <div class="tiles">
+    <div class="panel tilt tile" style="--c:var(--g)"><div class="num" id="t1">0</div><p>Payments check hue</p></div>
+    <div class="panel tilt tile" style="--c:var(--r)"><div class="num" id="t2">0</div><p>RED warning mili</p></div>
+    <div class="panel tilt tile" style="--c:var(--y)"><div class="num" id="t3">0</div><p>Community reports</p></div>
+    <div class="panel tilt tile" style="--c:#2bb8ff"><div class="num" id="t4">₹0</div><p>RED checks me rakam (estimate)</p></div>
+  </div>
+  <div class="panel tilt"><h2 style="font-size:1.2rem">Sabse zyada report hui IDs</h2><div class="bars" id="bars"></div></div>
+</section></main>
+<script>
+const $=id=>document.getElementById(id);
+async function load(){
+ try{const s=await (await fetch("/stats")).json();
+  $("t1").textContent=s.total_checks;$("t2").textContent=s.red_checks;$("t3").textContent=s.total_reports;
+  $("t4").textContent="₹"+Math.round(s.amount_in_red).toLocaleString("en-IN");
+  const max=Math.max(1,...s.top_ids.map(t=>t.n));$("bars").innerHTML="";
+  s.top_ids.forEach(t=>{const r=document.createElement("div");r.className="bar";
+   const c=document.createElement("code");c.textContent=t.upi_id;
+   const w=document.createElement("div"),b=document.createElement("i");b.style.width=(t.n/max*100)+"%";w.appendChild(b);
+   const n=document.createElement("span");n.textContent=t.n+" reports";r.append(c,w,n);$("bars").appendChild(r);});
+ }catch(e){$("bars").textContent="Backend se connect nahi ho paya.";}
+}
+load();setInterval(load,3000);
+document.addEventListener("mousemove",e=>{const x=e.clientX/innerWidth-.5,y=e.clientY/innerHeight-.5;
+ document.querySelectorAll(".tilt").forEach(p=>p.style.transform=`perspective(900px) rotateX(${-y*5}deg) rotateY(${x*6}deg)`);});
+</script>
+</body>
+</html>

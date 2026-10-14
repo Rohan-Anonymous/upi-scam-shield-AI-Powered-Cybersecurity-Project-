@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SMS Scam Detector</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><div class="brand">🛡️ UPI Scam Shield</div>
+<div><a href="index.html">Payment check</a><a href="alerts.html">Live alerts</a><a href="dashboard.html">Dashboard</a><a class="on" href="sms.html">SMS check</a></div></nav>
+<main><section class="wide">
+  <h1>Ye SMS asli hai ya scam?</h1>
+  <p class="sub">Koi bhi SMS ya WhatsApp message paste karo. AI model Hindi, Hinglish aur English me check karega.</p>
+  <div class="panel tilt">
+    <label for="t">Message</label>
+    <textarea id="t" rows="4" placeholder="Yahan message paste karein"></textarea>
+    <div class="chips">
+      <button class="chip" data-t="Dear customer, your SBI account will be blocked today. Update KYC now: http://sbi-kyc-update.xyz/login">Scam example</button>
+      <button class="chip" data-t="आपका खाता बंद हो जाएगा। अभी लिंक पर क्लिक करके KYC अपडेट करें">Hindi scam</button>
+      <button class="chip" data-t="Rs 1500 debited from A/c XX4821 on 12 Oct. If not you, call the number on the back of your card">Asli bank SMS</button>
+    </div>
+    <button class="btn" id="go">Check karo</button>
+    <div class="meter"><i id="m"></i></div>
+    <h2 id="lvl" style="margin-top:14px;color:var(--c)">Check ka intezaar</h2>
+    <p id="pr" style="color:var(--mut)"></p>
+    <p id="hi" style="margin-top:10px;font-size:1.05rem"></p>
+    <p id="wd" style="margin-top:10px"></p>
+  </div>
+  <p class="sub" style="margin-top:14px;font-size:.8rem">AI model synthetic (dummy) data par trained hai, isliye result sirf demo ke liye hai.</p>
+</section></main>
+<script>
+const $=id=>document.getElementById(id);
+const COL={GREEN:"var(--g)",YELLOW:"var(--y)",RED:"var(--r)"},NAME={GREEN:"Safe lag raha hai",YELLOW:"Shak wala message",RED:"Scam lag raha hai!"};
+document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{$("t").value=c.dataset.t;});
+$("go").onclick=async()=>{
+ const text=$("t").value.trim();if(!text){$("pr").textContent="Pehle message paste karein.";return;}
+ try{
+  const r=await (await fetch("/sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})})).json();
+  document.documentElement.style.setProperty("--c",COL[r.level]);
+  $("m").style.width=r.probability+"%";$("lvl").textContent=NAME[r.level];
+  $("pr").textContent="Scam hone ki sambhavna: "+r.probability+"%"+(r.has_link?" | Message me link hai":"");
+  $("hi").textContent=r.explanation_hi;
+  const w=$("wd");w.textContent="";
+  if(r.words.length){w.append("Shak wale shabd: ");r.words.forEach(x=>{const m=document.createElement("mark");m.textContent=x;w.append(m," ");});}
+  if(r.level==="RED"&&"speechSynthesis" in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(r.explanation_hi);u.lang="hi-IN";speechSynthesis.speak(u);}
+ }catch(e){$("pr").textContent="Backend se connect nahi ho paya.";}
+};
+document.addEventListener("mousemove",e=>{const x=e.clientX/innerWidth-.5,y=e.clientY/innerHeight-.5;
+ document.querySelectorAll(".tilt").forEach(p=>p.style.transform=`perspective(900px) rotateX(${-y*4}deg) rotateY(${x*5}deg)`);});
+</script>
+</body>
+</html>
